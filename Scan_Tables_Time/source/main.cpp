@@ -30,8 +30,8 @@ int main(int argc, char** argv)
      table[i] = (uchar)(divideWith * (i/divideWith));
 
 	// first get the image
-	Mat image = imread(argv[1], IMREAD_COLOR);
-
+	Mat or_image = imread(argv[1], IMREAD_COLOR);
+	Mat image = or_image.clone();
 
   // To measure time
 	// The eficient way
@@ -41,18 +41,21 @@ int main(int argc, char** argv)
   cout << "Time passed in milliseconds (efficient way): " << t*_TO_MILLI << endl;
 
 	// The iterator way
+	image = or_image.clone();
 	t = (double)getTickCount();
 	Mat image2 = ScanImageAndReduceIterator(image, table);
 	t = ((double)getTickCount() - t)/getTickFrequency();
   cout << "Time passed in milliseconds (iterator way): " << t*_TO_MILLI << endl;
 
 	// The on the fly way
+	image = or_image.clone();
 	t = (double)getTickCount();
 	Mat image3 = ScanImageAndReduceRandomAccess(image, table);
 	t = ((double)getTickCount() - t)/getTickFrequency();
   cout << "Time passed in milliseconds (On the fly way): " << t*_TO_MILLI << endl;
 
 	// The Core function
+	image = or_image.clone();
 	Mat lookUpTable(1, 256, CV_8U);
 	uchar* p = lookUpTable.ptr();
 	for( int i = 0; i < 256; ++i)
@@ -62,6 +65,13 @@ int main(int argc, char** argv)
 	LUT(image, lookUpTable, image4);
 	t = ((double)getTickCount() - t)/getTickFrequency();
   cout << "Time passed in milliseconds (On the fly way): " << t*_TO_MILLI << endl;
+
+	// Show image before and after
+	namedWindow( "Original Image", WINDOW_AUTOSIZE );
+	imshow( "Original Image", or_image );
+
+	namedWindow( "Modified Image", WINDOW_AUTOSIZE );
+	imshow( "Modified Image", image4 );
 
 	waitKey(0);
 
