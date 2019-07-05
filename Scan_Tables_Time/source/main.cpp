@@ -5,6 +5,8 @@
 using namespace cv;
 using namespace std;
 
+#define _TO_MILLI	1000
+
 int main(int argc, char** argv)
 {
 	if (argc != 3)
@@ -14,33 +16,53 @@ int main(int argc, char** argv)
 	}
 
 	// First calculate the lookup table
-    int divideWith = 0; // convert our input string to number - C++ style
-    stringstream s;
-    s << argv[2];
-    s >> divideWith;
-    if (!s || !divideWith)
-    {
-        cout << "Invalid number entered for dividing. " << endl;
-        return -1;
-    }
-    uchar table[256];
-    for (int i = 0; i < 256; ++i)
-       table[i] = (uchar)(divideWith * (i/divideWith));
-   
-   
-   // To measure time
-   double t = (double)getTickCount();
-   // do something
-   
-   // first get the image
-   Mat image = imread(argv[1], IMREAD_COLOR);
-   // now call the eficient way
-   image = ScanImageAndReduceC(image, table);
-   
-   // /do something
-   t = ((double)getTickCount() - t)/getTickFrequency();
-   cout << "Times passed in seconds: " << t << endl;
-	
+  int divideWith = 0; // convert our input string to number - C++ style
+  stringstream s;
+  s << argv[2];
+  s >> divideWith;
+  if (!s || !divideWith)
+  {
+      cout << "Invalid number entered for dividing. " << endl;
+      return -1;
+  }
+  uchar table[256];
+  for (int i = 0; i < 256; ++i)
+     table[i] = (uchar)(divideWith * (i/divideWith));
+
+	// first get the image
+	Mat image = imread(argv[1], IMREAD_COLOR);
+
+
+  // To measure time
+	// The eficient way
+  double t = (double)getTickCount();
+  Mat image1 = ScanImageAndReduceC(image, table);
+  t = ((double)getTickCount() - t)/getTickFrequency();
+  cout << "Time passed in milliseconds (efficient way): " << t*_TO_MILLI << endl;
+
+	// The iterator way
+	t = (double)getTickCount();
+	Mat image2 = ScanImageAndReduceIterator(image, table);
+	t = ((double)getTickCount() - t)/getTickFrequency();
+  cout << "Time passed in milliseconds (iterator way): " << t*_TO_MILLI << endl;
+
+	// The on the fly way
+	t = (double)getTickCount();
+	Mat image3 = ScanImageAndReduceRandomAccess(image, table);
+	t = ((double)getTickCount() - t)/getTickFrequency();
+  cout << "Time passed in milliseconds (On the fly way): " << t*_TO_MILLI << endl;
+
+	// The Core function
+	Mat lookUpTable(1, 256, CV_8U);
+	uchar* p = lookUpTable.ptr();
+	for( int i = 0; i < 256; ++i)
+	    p[i] = table[i];
+	Mat image4;
+	t = (double)getTickCount();
+	LUT(image, lookUpTable, image4);
+	t = ((double)getTickCount() - t)/getTickFrequency();
+  cout << "Time passed in milliseconds (On the fly way): " << t*_TO_MILLI << endl;
+
 	waitKey(0);
 
 	return 0;
